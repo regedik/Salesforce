@@ -1,0 +1,1 @@
+insertTenOLIsPerOpportunity(List<Opportunity> oppList); - который будет вставлять десять произвольных OpportunityLineItem для каждой Opportunity из списка
