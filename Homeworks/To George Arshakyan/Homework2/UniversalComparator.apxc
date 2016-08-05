@@ -1,0 +1,70 @@
+public class UniversalComparator {
+
+    public static Integer compare(Object param1, Object param2) {
+        String strParam1, strParam2;
+        Decimal decParam1, decParam2;
+        Integer result;
+        
+        if (param1 instanceof Datetime && param2 instanceof Datetime) {
+            return compareDatetimeAndDate((Datetime)param1, (Datetime)param2);
+        }else if (param1 instanceof Time && param2 instanceof Time) {
+            return compareTime((Time)param1, (Time)param2);
+        }    
+            
+        try {
+            strParam1 = String.valueOf(param1);
+            strParam2 = String.valueOf(param2);
+            
+            decParam1 = Decimal.valueOf(strParam1);
+            decParam2 = Decimal.valueOf(strParam2);
+        }
+        catch (Exception ex) {
+            System.debug('Incomparable type!!!');
+            return null;
+        }
+        
+        if (decParam1 < decParam2) {
+            result = -1;
+        }
+        else if (decParam1 > decParam2) {
+            result = 1;
+        }
+        else {
+            result = 0;
+        }
+        
+        return result;
+    }
+    
+    private static Integer compareDatetimeAndDate(Datetime datetime1, Datetime datetime2) {
+        Integer result;
+        
+        if (datetime1 < datetime2) {
+            result = -1;
+        }
+        else if (datetime1 > datetime2) {
+            result = 1;
+        }
+        else {
+            result = 0;
+        }
+        
+        return result;
+    }
+    
+    private static Integer compareTime(Time time1, Time time2) {
+        Integer result;
+        
+        if (time1 < time2) {
+            result = -1;
+        }
+        else if (time1 > time2) {
+            result = 1;
+        }
+        else {
+            result = 0;
+        }
+        
+        return result;
+    }
+}
