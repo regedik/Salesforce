@@ -1,0 +1,18 @@
+public class ReachTheInfinity {
+    public static void tryToReachTheInfinity() {
+        CustomSettings__c settings = CustomSettings__c.getInstance('message1');
+        CustomSettingsHier__c settingsHier = CustomSettingsHier__c.getInstance();
+        
+        try {
+            Double infinity = 1/0;
+        } catch(Exception e) {
+            String error_message;
+            error_message = settings.Message__c;            
+            error_message += settingsHier.BuyMessage__c;
+            error_message += settingsHier.Discount__c + '%';
+            
+            e.setMessage(error_message);
+            throw e;
+        }
+    }
+}
