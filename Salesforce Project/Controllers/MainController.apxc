@@ -1,0 +1,48 @@
+public class MainController2 {
+    
+    private final String ID_PARAM_NAME = 'id';
+    private String pageToRedirect;
+   
+    public MainController2() {
+        User__c user = getUserFromId();
+        
+        if (user == null) {
+            pageToRedirect = '/apex/error2'; 
+        }
+        else {
+            if (user.User_type__c == 'User') {
+                pageToRedirect = '/apex/user_view2';
+            }
+            else {
+                pageToRedirect = '/apex/admin_view2';
+            }
+        }
+        
+        redirect();
+    }
+    
+    public PageReference redirect(){
+        PageReference page = new PageReference(pageToRedirect);
+   		page.setRedirect(true);
+        return page;
+	}
+    
+    private User__c getUserFromId() {
+        String idParam = ApexPages.currentPage().getParameters().get(ID_PARAM_NAME);
+        if (idParam == null) {
+            return null;
+        }
+        
+        // Check if exists
+        User__c user;
+        try {
+        	user = [SELECT user_type__c FROM User__c WHERE id=:idParam LIMIT 1];
+            //label = 'Show view in order to user type';
+        } catch(QueryException ex) {
+            //label = 'Redirect to error page \'No such id\'';
+            return null;
+        }
+        
+        return user;
+    }
+}
