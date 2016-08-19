@@ -1,0 +1,68 @@
+@isTest
+public class MainControllerTest {
+  
+    @isTest
+    public static void withoutParameterTest() {
+        PageReference pageRef = Page.main;
+        Test.setCurrentPage(pageRef);
+      
+        MainController controller = new MainController();
+        String nextPage = controller.redirect().getUrl();
+
+        System.debug('1: ' + nextPage);
+        
+        // Verify that page fails without parameters
+        System.assertEquals('/error?error=No+users+or+admins+with+such+id%21%21&isItAdmin=none&userName=no+user', nextPage);
+    }
+    
+    @isTest
+    public static void withNotCorrectParameterTest() {
+        PageReference pageRef = Page.main;
+        Test.setCurrentPage(pageRef);
+        
+        ApexPages.currentPage().getParameters().put('id', 'apl280jdk059kl7');
+        MainController controller = new MainController();
+        String nextPage = controller.redirect().getUrl();
+        
+        System.debug('2: ' + nextPage);
+        
+        // Verify that page fails with not existing id parameter
+        System.assertEquals('/error?error=No+users+or+admins+with+such+id%21%21&isItAdmin=none&userName=no+user', nextPage);
+    }
+    
+    @isTest
+    public static void withUserIdParameterTest() {
+        PageReference pageRef = Page.main;
+        Test.setCurrentPage(pageRef);
+        
+        // Add id of user to page URL
+        User__c user = new User__c(Name='TestUser1', User_type__c='User');
+        insert user;
+        
+        ApexPages.currentPage().getParameters().put('id', user.Id);
+        MainController controller = new MainController();
+        String nextPage = controller.redirect().getUrl();
+        
+        System.debug('3: ' + nextPage);
+        
+        System.assertEquals('/main_view?error=no+errors&isItAdmin=false&userName=' + user.name, nextPage);
+    }
+    
+    @isTest
+    public static void withAdminIdParameterTest() {
+        PageReference pageRef = Page.main;
+        Test.setCurrentPage(pageRef);
+        
+        // Add id of admin to page URL
+        User__c user = new User__c(Name='TestUser2', User_type__c='Admin');
+        insert user;
+        
+        ApexPages.currentPage().getParameters().put('id', user.Id);
+        MainController controller = new MainController();
+        String nextPage = controller.redirect().getUrl();
+
+        System.debug('4: ' + nextPage);
+        
+        System.assertEquals('/main_view?error=no+errors&isItAdmin=true&userName=' + user.name, nextPage);
+    }
+}
