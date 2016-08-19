@@ -8,8 +8,6 @@ public class MainControllerTest {
       
         MainController controller = new MainController();
         String nextPage = controller.redirect().getUrl();
-
-        System.debug('1: ' + nextPage);
         
         // Verify that page fails without parameters
         System.assertEquals('/error?error=No+users+or+admins+with+such+id%21%21&isItAdmin=none&userName=no+user', nextPage);
@@ -23,9 +21,7 @@ public class MainControllerTest {
         ApexPages.currentPage().getParameters().put('id', 'apl280jdk059kl7');
         MainController controller = new MainController();
         String nextPage = controller.redirect().getUrl();
-        
-        System.debug('2: ' + nextPage);
-        
+
         // Verify that page fails with not existing id parameter
         System.assertEquals('/error?error=No+users+or+admins+with+such+id%21%21&isItAdmin=none&userName=no+user', nextPage);
     }
@@ -42,9 +38,7 @@ public class MainControllerTest {
         ApexPages.currentPage().getParameters().put('id', user.Id);
         MainController controller = new MainController();
         String nextPage = controller.redirect().getUrl();
-        
-        System.debug('3: ' + nextPage);
-        
+ 
         System.assertEquals('/main_view?error=no+errors&isItAdmin=false&userName=' + user.name, nextPage);
     }
     
@@ -61,8 +55,6 @@ public class MainControllerTest {
         MainController controller = new MainController();
         String nextPage = controller.redirect().getUrl();
 
-        System.debug('4: ' + nextPage);
-        
         System.assertEquals('/main_view?error=no+errors&isItAdmin=true&userName=' + user.name, nextPage);
     }
 }
