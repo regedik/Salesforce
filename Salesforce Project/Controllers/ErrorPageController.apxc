@@ -1,0 +1,8 @@
+public class ErrorPageController {
+  
+    public String errorMessage { set; get; }
+    
+    public ErrorPageController() {
+        errorMessage = ApexPages.currentPage().getParameters().get(ContansDefinitions.ERROR_PARAM_NAME);
+    }
+}
