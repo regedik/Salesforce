@@ -1,0 +1,49 @@
+public class MainController {
+    private final String ID_PARAM_NAME = 'id';
+    private final String ERROR_PAGE_PATH = '/error'; 
+    private final String MAIN_VIEW_PAGE_PATH = '/main_view';
+    private final String ERROR_DEFINITION = 'No users or admins with such id!!';
+    private String pageToRedirect;
+    private String isItAdmin = 'none';
+    private String userName = 'no user';
+    private String error = 'no errors';
+    
+    public MainController() {
+        User__c user = getUserFromId();
+        
+        if (user == null) {
+            error = ERROR_DEFINITION;
+            pageToRedirect = ERROR_PAGE_PATH;
+        }
+        else {
+            userName = user.Name;
+            isItAdmin = (user.User_type__c == 'User') ? ContansDefinitions.USER_TYPE_USER_INDENTIFICATOR : ContansDefinitions.USER_TYPE_ADMIN_INDENTIFICATOR;
+            pageToRedirect = MAIN_VIEW_PAGE_PATH;
+        }
+    }
+    
+    public PageReference redirect(){
+        PageReference page = new PageReference(pageToRedirect);
+        page.getParameters().put(ContansDefinitions.USER_TYPE_PARAM_NAME, isItAdmin);
+        page.getParameters().put(ContansDefinitions.USER_NAME_PARAM_NAME, userName);
+        page.getParameters().put(ContansDefinitions.ERROR_PARAM_NAME, error);
+       page.setRedirect(true);
+        return page;
+  }
+    
+    private User__c getUserFromId() {
+        String idParam = ApexPages.currentPage().getParameters().get(ID_PARAM_NAME);
+        if (idParam == null) {
+            return null;
+        }
+        
+        User__c user;
+        try {
+          user = [SELECT user_type__c, Name FROM User__c WHERE id=:idParam LIMIT 1]; 
+        } catch(QueryException ex) {
+            return null;
+        }
+        
+        return user;
+    }
+}

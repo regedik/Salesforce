@@ -1,0 +1,3 @@
+PracticBatch mySheduleBatch = new PracticBatch();
+String sch = '0 0 0 1 * ?';
+String jobID = system.schedule('Books job', sch, mySheduleBatch);

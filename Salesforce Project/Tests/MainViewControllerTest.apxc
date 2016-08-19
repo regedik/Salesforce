@@ -1,0 +1,143 @@
+@isTest
+public class MainViewControllerTest {
+
+    @isTest
+    public static void statusOptionsPropertyTest() {
+        MainViewController controller = new MainViewController();
+        
+        Test.startTest();
+        List<SelectOption> listOfOptions = controller.statusOptions;
+        Test.stopTest();
+        
+        System.assertEquals(3, listOfOptions.size());
+    }
+    
+    @isTest
+    public static void creatingLessonAndDayTest() {
+        MainViewController controller = new MainViewController();
+        
+        LessonWrapper lessonWr = new LessonWrapper();
+        lessonWr.lessonName = 'Test Lesson';
+        controller.lessonWr = lessonWr;
+        
+        Test.startTest();
+        controller.createNewLesson();
+        Test.stopTest();
+        
+		System.assertEquals(1, [SELECT id FROM Lesson__c].size());
+		System.assertEquals(1, [SELECT id FROM StudingDay__c].size());        
+    }
+    
+    @isTest
+    public static void outputMapDataTest() {
+        StudingDay__c day = new StudingDay__c(Date__c=Date.today());
+        insert day;
+        List<Lesson__c> lessonsList = new List<Lesson__c>(); 
+        lessonsList.add(new Lesson__c(Name='Test lesson1', StudingDay__c=day.id));
+        lessonsList.add(new Lesson__c(Name='Test lesson2', StudingDay__c=day.id));
+        insert lessonsList;
+        
+        Test.startTest();
+        MainViewController controller = new MainViewController();
+		Test.stopTest();
+        
+		System.assertEquals(1, controller.mapDaysAndLessonsWrappers.size());     
+        
+        System.assertEquals(false, controller.isNewTimetable);
+    }
+    
+    @isTest
+    public static void deleteLessonTest() {
+        StudingDay__c day = new StudingDay__c(Date__c=Date.today());
+        insert day;
+        List<Lesson__c> lessonsList = new List<Lesson__c>(); 
+        lessonsList.add(new Lesson__c(Name='Test lesson1', StudingDay__c=day.id));
+        insert lessonsList;
+        
+        Test.startTest();
+        MainViewController controller = new MainViewController();
+        controller.lessonToDelete = lessonsList.get(0).id;
+        controller.deleteLesson();
+		Test.stopTest();
+        
+		System.assertEquals(0, controller.mapDaysAndLessonsWrappers.size());     
+    }
+    
+    @isTest
+    public static void createFeedbacksTest() {        
+        List<FeedbackWrapper> listOfFeedbackWrappers = new List<FeedbackWrapper>();
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+            
+        StudingDay__c day = new StudingDay__c(Date__c=Date.today());
+        insert day;
+        Lesson__c lesson = new Lesson__c(Name='Test lesson1', StudingDay__c=day.id);
+        insert lesson;
+        
+        Internship__c internshipCustomSettings = new Internship__c();
+        internshipCustomSettings.Name = 'AdminEmail';
+        internshipCustomSettings.Email__c = 'regedik22@gmail.com';
+        internshipCustomSettings.MessageText__c = 'createFeedbacksTest';
+        insert internshipCustomSettings;
+        
+        Test.startTest();
+        MainViewController controller = new MainViewController();
+        controller.lessonToFeedbackId = lesson.id;
+        for (FeedbackWrapper wrapper : listOfFeedbackWrappers) {
+            controller.feedbackWr = wrapper;
+            controller.feedbackWr.comprehension = 'Low';
+        	controller.addNewFeedback();
+        }
+		Test.stopTest();
+        
+		System.assertEquals(3, [SELECT id FROM Feedback__c].size()); 
+    }
+    
+    @isTest
+    public static void outputFeedbacksMapTest() {                  
+        StudingDay__c day = new StudingDay__c(Date__c=Date.today());
+        insert day;
+        Lesson__c lesson = new Lesson__c(Name='Test lesson1', StudingDay__c=day.id);
+        insert lesson;
+        
+        List<FeedbackWrapper> listOfFeedbackWrappers = new List<FeedbackWrapper>();
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+        listOfFeedbackWrappers.add(new FeedbackWrapper());
+        
+        MainViewController controller = new MainViewController();
+        controller.lessonToFeedbackId = lesson.id;
+        
+        for (FeedbackWrapper wrapper : listOfFeedbackWrappers) {
+            controller.feedbackWr = wrapper;
+        	controller.addNewFeedback();
+        }
+        
+        Test.startTest();
+        controller.isShowFeedbacks = false;
+        controller.showFeedbacks();
+		Test.stopTest();
+        
+        System.assertEquals(false, controller.isNoFeedbacks);
+		System.assertEquals(true, controller.isShowFeedbacks);
+        System.assertEquals(1, controller.mapFeedbacksWrappers.size());
+    }
+    
+    @isTest
+    public static void propertiesTest() {         
+        Test.startTest();
+        MainViewController controller = new MainViewController();
+        controller.isShowNewLessonView = false;
+    	controller.openDayDate = Date.today();
+        controller.showNewLessonView();
+        controller.showFeedBackView();
+        controller.blankAction();
+		Test.stopTest();
+        
+        System.assertEquals(true, controller.isAfterLesson);
+        System.assertEquals(true, controller.isShowNewLessonView);
+        System.assertEquals(true, controller.isShowFeedbackView);
+        System.assertEquals('Hide new lesson view', controller.changeNewLessonViewButtonName);       
+    }
+}

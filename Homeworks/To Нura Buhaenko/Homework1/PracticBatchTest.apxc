@@ -1,0 +1,44 @@
+@isTest
+private class PracticBatchTest {
+	@isTest
+	static void testWithoutExistedWriters() {
+    	PracticBatch classToTest = new PracticBatch();
+        
+        List<Book__c> listOfNewBook = new List<Book__c> {
+            	new Book__c(Name = 'book1', Author__c = 'writer1,writer2'),
+                new Book__c(Name = 'book2', Author__c = 'writer2,writer3')};
+        
+        insert listOfNewBook;
+     
+        System.Test.startTest();
+        classToTest.execute(null, listOfNewBook);
+        System.Test.stopTest();
+
+        //Asserts
+        System.assertEquals(2, [SELECT Name FROM Book__c].size(), 'Too many books were created!!!');
+        System.assertEquals(3, [SELECT Name FROM Writer__c].size(), 'Too many writers were created!!!');
+        System.assertEquals(4, [SELECT Name FROM BookToWriters__c].size(), 'Too many junction objects were created!!!');
+    }
+    
+    @isTest
+	static void testWithExistedWriters() {
+    	ClassToTest classs = new ClassToTest();
+        
+        insert new Writer__c(Name = 'writer1');
+        
+        List<Book__c> listOfNewBook = new List<Book__c> {
+            	new Book__c(Name = 'book1', Author__c = 'writer1,writer2'),
+                new Book__c(Name = 'book2', Author__c = 'writer2,writer3')};
+        
+        insert listOfNewBook;
+    
+        System.Test.startTest();
+        classs.execute(listOfNewBook);
+        System.Test.stopTest();       
+        
+        //Asserts
+        System.assertEquals(2, [SELECT Name FROM Book__c].size(), 'Too many books were created!!!');
+        System.assertEquals(3, [SELECT Name FROM Writer__c].size(), 'Too many writers were created!!!');
+        System.assertEquals(4, [SELECT Name FROM BookToWriters__c].size(), 'Too many junction objects were created!!!');
+    }
+}

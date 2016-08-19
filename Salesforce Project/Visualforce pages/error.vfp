@@ -1,0 +1,6 @@
+<apex:page controller="ErrorPageController">
+    <h1>Error</h1>
+    <apex:pageBlock >
+        {!errorMessage}
+    </apex:pageBlock>
+</apex:page>

@@ -1,0 +1,110 @@
+global class PracticBatch implements Database.Batchable<sObject>, Schedulable {
+    
+    private final String QUERY = 'SELECT Author__c, Writer__c FROM Book__c WHERE Author__c != NULL';
+    private final String SPLITTER = ',';
+    private final Integer NUMBER_OF_RECORDS_FOR_ONE_BATCH = 200;
+    
+    global PracticBatch() {}
+    
+    global Database.QueryLocator start(Database.BatchableContext BC) {
+        return Database.getQueryLocator(QUERY);
+    }
+
+    global void execute(Database.BatchableContext BC, List<Book__c> scope) {     
+        // get set of ids
+        Map<Id, Book__c> mapOfBooks = new Map<Id, Book__c>(scope);
+        Set<Id> setOfId = mapOfBooks.keySet();
+        
+        // Get existing BookToWriters input books								   
+        List<BookToWriters__c> listBookToWriter = [SELECT Id FROM BookToWriters__c WHERE Book__c IN :setOfId];  
+        
+        // Remove existing books
+        for (BookToWriters__c bookTW : listBookToWriter) {
+            if (mapOfBooks.containsKey(bookTW.Book__c)) {
+                mapOfBooks.remove(bookTW.Book__c);
+            }
+        } 
+        
+        // Get all authors from field 'Author__c'
+        List<String> listOfAuthors = new List<String>();
+        for (Book__c book : mapOfBooks.values()) {
+            listOfAuthors.addAll(book.Author__c.split(SPLITTER));
+        }
+        
+        // Delete duplicates
+		Set<String> setOfAuthors = new Set<String>(listOfAuthors);
+                
+        // Get Authers which already exists
+        List<Writer__c> listOfWriters = [SELECT Name, Id FROM Writer__c WHERE Name IN :setOfAuthors];
+		
+        // Convert them to Map
+        Map<String, Id> mapOfWriters = new Map<String, Id>();
+        for (Writer__c writer : listOfWriters) {
+            mapOfWriters.put(writer.Name, writer.Id);
+        }
+        
+        List<Writer__c> listOfNewWriters = new List<Writer__c>();
+        
+        // Prepare existing variable for new data
+		listBookToWriter.clear(); 
+        
+		for (Book__c book : mapOfBooks.values()) {
+            listOfAuthors = book.Author__c.split(SPLITTER);
+            for (String curAuthor : listOfAuthors) {
+                if (mapOfWriters.containsKey(curAuthor)) {
+                    // create junction
+                    listBookToWriter.add(new BookToWriters__c(Book__c = book.Id, 
+                    		Writer__c = mapOfWriters.get(curAuthor)));
+                    
+                    if (mapOfWriters.get(curAuthor) == null) {
+                        for (Integer i = 0; i < listOfNewWriters.size(); i++) {
+                            if (listOfNewWriters.get(i).Name == curAuthor) {
+                                listOfNewWriters.add(listOfNewWriters.get(i));
+                                break;
+                            }
+                        }
+                    }
+                }
+                else {
+                	// create writer
+                	listOfNewWriters.add(new Writer__c(Name = curAuthor));
+                	
+                    // Update Map of available witers 
+                    mapOfWriters.put(curAuthor, null);
+                    
+                	// create junction
+                	listBookToWriter.add(new BookToWriters__c(Book__c = book.Id)); 
+                }
+            }
+        }        
+        
+        // Delete duplicates(it is required condition to insert command)
+        // Insert new Writers
+        insert new List<Writer__c>(new Set<Writer__c>(listOfNewWriters));
+        
+        // Populate junction objects with Writer's id
+        Integer counter = 0;
+        for (BookToWriters__c junction : listBookToWriter) {
+            if (junction.Writer__c == null) {
+                junction.Writer__c = listOfNewWriters.get(counter++).Id;
+            }
+        }
+        
+        // Insert new Junction objects(BookToWriters__c)
+        insert listBookToWriter;
+    }
+
+    global void finish(Database.BatchableContext BC) { 
+    	Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+        mail.setToAddresses(new String[]{'regedik22@gmail.com'});
+        mail.setReplyTo('batch@acme.com');
+        mail.setSenderDisplayName('Batch Processing');
+        mail.setSubject('Batch Process Completed');
+        mail.setPlainTextBody('Batch Process has completed');
+        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+    }
+    
+    public void execute(SchedulableContext sc) {
+        Database.executeBatch(this, NUMBER_OF_RECORDS_FOR_ONE_BATCH);
+    } 
+}

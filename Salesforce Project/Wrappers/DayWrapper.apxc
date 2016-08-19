@@ -1,0 +1,38 @@
+public class DayWrapper implements Comparable {
+        public Id dayId { get; set; }
+        public String name { get; set; }
+        public Date dayDate { get; set; }
+        
+        public DayWrapper() { }
+        
+        public DayWrapper(StudingDay__c day) {
+            this.dayId = day.Id;
+            this.name = day.name;
+            this.dayDate = day.Date__c;
+        }
+        
+        public List<DayWrapper> convertListOfObjectToListOfWrappers(List<StudingDay__c> listOfDays) {
+            List<DayWrapper> listOfDaysWrappers = new List<DayWrapper>();
+            
+            for (StudingDay__c day : listOfDays) {
+                listOfDaysWrappers.add(new DayWrapper(day));
+            }
+            
+            return listOfDaysWrappers;
+        }
+        
+        public Boolean equals(Object obj) {
+            return dayId == ((DayWrapper)obj).dayId;
+    }
+        
+        public Integer hashCode() {
+            return String.valueOf(dayId).hashcode();
+        }
+        
+        public Integer compareTo(Object compareTo) {
+            DayWrapper compareToEmp = (DayWrapper)compareTo;
+            if (dayDate == compareToEmp.dayDate) return 0; 
+            if (dayDate > compareToEmp.dayDate) return 1;
+            return -1;       
+      }
+    }

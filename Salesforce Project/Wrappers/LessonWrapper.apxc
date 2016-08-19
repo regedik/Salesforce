@@ -1,0 +1,45 @@
+public class LessonWrapper implements Comparable {
+        public Id lessonId { get; set; }
+        public Id dayId { get; set; }
+        public String lessonName { get; set; }
+        public String lessonDay { get; set; }
+        
+        private Datetime createdDate;
+        
+        public Date dayDate { 
+            get {
+                if (dayDate == null) {
+                    dayDate = Date.today();
+                }        
+                return dayDate;
+            } 
+            set; 
+        }
+        
+        public LessonWrapper() { }
+        
+        public LessonWrapper(Lesson__c lesson) {
+            this.lessonId = lesson.id;
+            this.dayId = lesson.StudingDay__c;
+            this.lessonName = lesson.Name;
+            this.createdDate = lesson.CreatedDate;
+            this.lessonDay = lesson.lessonDay__c;
+        }
+        
+        public List<LessonWrapper> convertListOfObjectToListOfWrappers(List<Lesson__c> listOfLessons) {
+            List<LessonWrapper> listOfLessonsWrappers = new List<LessonWrapper>();
+            
+            for (Lesson__c lesson : listOfLessons) {
+                listOfLessonsWrappers.add(new LessonWrapper(lesson));
+            }
+            
+            return listOfLessonsWrappers;
+        }
+        
+        public Integer compareTo(Object compareTo) {
+            LessonWrapper compareToEmp = (LessonWrapper)compareTo;
+            if (CreatedDate == compareToEmp.CreatedDate) return 0; 
+            if (CreatedDate > compareToEmp.CreatedDate) return 1;
+            return -1;       
+      }
+    }

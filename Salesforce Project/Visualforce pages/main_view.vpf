@@ -1,0 +1,90 @@
+<apex:page controller="MainViewController" docType="html-5.0">
+    <apex:form id="form">         
+        <apex:pageBlock rendered="{!isNewTimetable}" >
+            <apex:pageBlockSection >
+                <apex:outputText value="Timetable is empty!" />
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Timetable" rendered="{!!isNewTimetable}" id="timetableId" >
+            <apex:pageMessages />
+            <apex:repeat value="{!mapDaysAndLessonsWrappers}" var="day">
+                <apex:pageBlock >
+                    <apex:outputLabel value="{!day.name}" >
+                        <apex:actionSupport action="{!blankAction}" event="onclick" reRender="timetableId" >
+                            <apex:param name="openDayParam" assignTo="{!openDay}" value="{!day.dayId}"/>
+                            <apex:param name="openDayDateParam" assignTo="{!openDayDate}" value="{!day.name}"/>
+                        </apex:actionSupport>
+                    </apex:outputLabel> 
+                    <br/>
+                    <apex:pageBlock rendered="{!openDay = day.dayId}">
+                        <apex:pageBlock title="Create feedback" rendered="{!isShowFeedbackView && !isItAdmin}">
+                            <apex:outputText value="Feedback for {!lessonToFeedbackName}" />
+                            <apex:pageBlockSection >
+                                <apex:selectList size="1" label="Level of comprehension:" value="{!feedbackWr.comprehension}" id="picklist" >
+                                    <apex:selectOptions value="{!statusOptions}"/>
+                                </apex:selectList>
+                                <apex:input type="text" label="Description: " value="{!feedbackWr.description}" />
+                            </apex:pageBlockSection>
+                            <apex:pageBlockButtons location="bottom" >
+                                <apex:commandButton action="{!addNewFeedback}" value="Create feedback" />
+                            </apex:pageBlockButtons>
+                        </apex:pageBlock>
+                        Lessons:<br/> 
+                        <apex:repeat value="{!mapDaysAndLessonsWrappers[day]}" var="lesson" >                            
+                            <apex:commandButton action="{!showFeedBackView}" value="feedback" reRender="timetableId" rendered="{!isAfterLesson && !isItAdmin}">
+                                <apex:param name="lessonToFeedbackIdParam" assignTo="{!lessonToFeedbackId}" value="{!lesson.lessonId}"/>
+                                <apex:param name="lessonToFeedbackNameParam" assignTo="{!lessonToFeedbackName}" value="{!lesson.lessonName}"/>
+                            </apex:commandButton>
+                            <apex:commandLink action="{!deleteLesson}" value="delete " reRender="form" rendered="{!isItAdmin}">
+                                <apex:param name="lessonToDeleteParam" assignTo="{!lessonToDelete}" value="{!lesson.lessonId}"/>
+                            </apex:commandLink>                            
+                            <apex:outputText value="{!lesson.lessonName}"/><br/>
+                        </apex:repeat>
+                    </apex:pageBlock>    
+               </apex:pageBlock>
+            </apex:repeat>                
+        </apex:pageBlock>
+        
+        <apex:pageBlock rendered="{!isItAdmin}" >
+            <apex:pageBlockButtons location="top" >
+                <apex:commandButton action="{!showNewLessonView}" value="{!changeNewLessonViewButtonName}"  />
+                <apex:commandButton action="{!showFeedbacks}" value="{!changeFeedbacksViewButtonName}"  />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Create lesson" rendered="{!isShowNewLessonView && isItAdmin}" >
+            <apex:pageMessages />
+            <apex:pageBlockSection >
+                <apex:input type="text" label="Lesson name: " value="{!lessonWr.lessonName}" />
+                <apex:input type="date" label="Day date: " value="{!lessonWr.dayDate}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons location="bottom" >
+                <apex:commandButton action="{!createNewLesson}" value="add lesson" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Feedbacks" rendered="{!isShowFeedbacks && isItAdmin}">
+            <apex:pageBlock rendered="{!isNoFeedbacks}" >
+                <apex:pageBlockSection >
+                    <apex:outputText value="No feedbacks!" />
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+                <apex:repeat value="{!mapFeedbacksWrappers}" var="lesson" rendered="{!!isNoFeedbacks}">
+                    <apex:pageBlock >
+                        Feedbacks for lesson: 
+                        <apex:outputLabel value="{!lesson.lessonName}" />
+                        <apex:outputLabel value="{!lesson.lessonDay}" />
+                        <br/>
+                        <apex:repeat value="{!mapFeedbacksWrappers[lesson]}" var="feedback">
+                            <apex:pageBlock >
+                                <apex:outputText value="User: {!feedback.userName}"/><br/>
+                                <apex:outputText value="Comprehension level: {!feedback.comprehension}"/><br/>
+                                <apex:outputText value="Description: {!feedback.description}"/><br/>
+                            </apex:pageBlock>
+                        </apex:repeat>   
+                   </apex:pageBlock>
+                </apex:repeat>             
+        </apex:pageBlock>
+    </apex:form>  
+</apex:page>
