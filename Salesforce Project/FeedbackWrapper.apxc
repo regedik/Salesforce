@@ -1,0 +1,31 @@
+public class FeedbackWrapper {
+        public String description { get; set; }
+        public String comprehension { get; set; }
+        public Id lessonId { get; set; }
+        public Id feedbackId { get; set; }
+        public String userName { get; set; }
+        
+        public FeedbackWrapper() { }
+        
+        public FeedbackWrapper(Feedback__c feedback) {
+            this.feedbackId = feedback.id;
+            this.lessonId = feedback.lessonId__c;
+            this.description = feedback.Description__c;
+            this.comprehension = feedback.Comprehension__c;
+            this.userName = feedback.userName__c;
+        }
+        
+        public void clear() {
+            description = '';
+        }
+        
+        public List<FeedbackWrapper> convertListOfObjectToListOfWrappers(List<Feedback__c> listOfFeedbacks) {
+            List<FeedbackWrapper> listOfFeedbacksWrappers = new List<FeedbackWrapper>();
+            
+            for (Feedback__c feedback : listOfFeedbacks) {
+                listOfFeedbacksWrappers.add(new FeedbackWrapper(feedback));
+            }
+            
+            return listOfFeedbacksWrappers;
+        }
+    }
