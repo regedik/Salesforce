@@ -1,0 +1,206 @@
+public class MainViewController {
+    
+    // Admin
+    public String lessonToDelete { get; set; }
+    public Boolean isShowNewLessonView { get; set; }
+    public Boolean isShowFeedbacks { get; set; }  
+    public Map<LessonWrapper, List<FeedbackWrapper>> mapFeedbacksWrappers { get; set; }
+    public Boolean isNoFeedbacks { get { return mapFeedbacksWrappers.isEmpty(); } }
+    public String changeNewLessonViewButtonName { set; get; }
+    public String changeFeedbacksViewButtonName { set; get; }
+    private final String SHOW_NEWLESSON_TITLE = 'Show new lesson view';
+    private final String HIDE_NEWLESSON_TITLE = 'Hide new lesson view';
+    private final String SHOW_FEEDBACKS_TITLE = 'Show feedbacks view';
+    private final String HIDE_FEEDBACKS_TITLE = 'Hide feedbacks view';
+    private final String CUSTOM_SETTING_NAME = 'AdminEmail';
+    private final Integer AMOUNT_TO_SEND_MESSAGE = 3;
+    
+    // User
+    public Boolean isShowFeedbackView { get; set; }
+    public Date openDayDate { get; set; }  
+    public Boolean isAfterLesson { get { return Date.today() >= openDayDate; } }
+    public String lessonToFeedbackName { get; set; }
+    public String lessonToFeedbackId { get; set; }
+    private String userName;
+    // Picklist for feedback
+    public List<SelectOption> statusOptions { 
+        get { 
+            if (statusOptions == null) { 
+                statusOptions = new list<SelectOption>();
+        
+                for (Schema.Picklistentry picklistEntry : Feedback__c.Comprehension__c.getDescribe().getPicklistValues()) {
+                    statusOptions.add(new SelectOption(pickListEntry.getValue(),pickListEntry.getLabel()));
+                } 
+            } 
+            return statusOptions; 
+        } 
+        set; 
+    }
+    // 
+    
+    public LessonWrapper lessonWr { get; set; }
+    public DayWrapper dayWr { get; set; }
+    public FeedbackWrapper feedbackWr { get; set; }
+    
+    public String openDay { get; set { openDay = value; isShowFeedbackView = false; } }
+    public Map<DayWrapper, List<LessonWrapper>> mapDaysAndLessonsWrappers { get; set; }
+    
+    public Boolean isItAdmin { get; set; }
+    
+    public Boolean isNewTimetable { 
+        get { 
+            return mapDaysAndLessonsWrappers.isEmpty(); 
+        } 
+    }
+    
+    public MainViewController() {
+        // Initialization
+        feedbackWr = new FeedbackWrapper();
+        lessonWr = new LessonWrapper();
+        dayWr = new DayWrapper();
+        openDay = '';
+        userName = ApexPages.currentPage().getParameters().get(ContansDefinitions.USER_NAME_PARAM_NAME);
+        String idParam = ApexPages.currentPage().getParameters().get(ContansDefinitions.USER_TYPE_PARAM_NAME);
+        isItAdmin = (idParam == ContansDefinitions.USER_TYPE_ADMIN_INDENTIFICATOR) ? true : false;
+        changeNewLessonViewButtonName = SHOW_NEWLESSON_TITLE;
+        changeFeedbacksViewButtonName = SHOW_FEEDBACKS_TITLE;
+        
+        // admin
+        isShowNewLessonView = false;
+        isShowFeedbacks = false;
+        
+        // user
+        isShowFeedbackView = false;
+ 
+        populateOutputMap();
+    }
+    
+    private void populateOutputMap() {
+        mapDaysAndLessonsWrappers = new Map<DayWrapper, List<LessonWrapper>>();         
+        List<DayWrapper> listOfDaysWrappers = dayWr.convertListOfObjectToListOfWrappers([SELECT Name, Date__c FROM StudingDay__c]);
+        List<LessonWrapper> listOfLessonsWrappers = lessonWr.convertListOfObjectToListOfWrappers([SELECT StudingDay__c, lessonDay__c, Name, CreatedDate FROM Lesson__c]);
+        for (DayWrapper day : listOfDaysWrappers) {
+            for (LessonWrapper lesson : listOfLessonsWrappers) {
+                if (lesson.dayId == day.dayId) {
+                    if (mapDaysAndLessonsWrappers.containsKey(day)) {
+                        mapDaysAndLessonsWrappers.get(day).add(lesson);
+                    }
+                    else {
+                        mapDaysAndLessonsWrappers.put(day, new List<LessonWrapper> { lesson } );
+                    }
+                }
+            }
+            
+            mapDaysAndLessonsWrappers.get(day).sort();
+        }    
+    }
+    
+    //Admin
+    public void deleteLesson() { 
+        Lesson__c lessonToDeleteObj = [SELECT StudingDay__c FROM Lesson__c WHERE id=:lessonToDelete];     
+        StudingDay__c dayOfLessonToDeleteObj = [SELECT id, Name, Date__c FROM StudingDay__c WHERE id=:lessonToDeleteObj.StudingDay__c];
+        
+        if (mapDaysAndLessonsWrappers.get(new DayWrapper(dayOfLessonToDeleteObj)).size() == 1) {
+            delete dayOfLessonToDeleteObj;
+        }
+        
+        delete lessonToDeleteObj;
+        populateOutputMap();
+    }
+    public void showNewLessonView() {
+        isShowNewLessonView = isShowNewLessonView ? false : true;
+        changeNewLessonViewButtonName = isShowNewLessonView ? HIDE_NEWLESSON_TITLE : SHOW_NEWLESSON_TITLE;
+    }
+    public void showFeedbacks() {                
+        if (isShowFeedbacks == false) {
+            populateOutputFeedbackMap();
+            isShowFeedbacks = true;
+        }
+        else {
+            isShowFeedbacks = false;
+        }
+        changeFeedbacksViewButtonName = isShowFeedbacks ? HIDE_FEEDBACKS_TITLE : SHOW_FEEDBACKS_TITLE;
+    }    
+    private void populateOutputFeedbackMap() {
+    mapFeedbacksWrappers = new Map<LessonWrapper, List<FeedbackWrapper>>();
+        List<LessonWrapper> listOfLessonsWrappers = lessonWr.convertListOfObjectToListOfWrappers([SELECT StudingDay__c, lessonDay__c, Name, CreatedDate FROM Lesson__c]);
+        List<FeedbackWrapper> listOfFeedbackWrappers = feedbackWr.convertListOfObjectToListOfWrappers([SELECT id, userName__c,
+            lessonId__c, comprehension__c, description__c FROM Feedback__c]);
+        for (FeedbackWrapper feedback : listOfFeedbackWrappers) {
+            for (LessonWrapper lesson : listOfLessonsWrappers) {
+                if (lesson.lessonId == feedback.lessonId) {
+                    if (mapFeedbacksWrappers.containsKey(lesson)) {
+                        mapFeedbacksWrappers.get(lesson).add(feedback);
+                    }
+                    else {
+                        mapFeedbacksWrappers.put(lesson, new List<FeedbackWrapper> { feedback } );
+                    }
+                }
+            }
+        }
+    } 
+    public PageReference createNewLesson() {
+        if (lessonWr.lessonName == '' || lessonWr.dayDate == null) {
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR, 'All fields need to be filled')); 
+            return null;
+        }
+        
+        StudingDay__c dayRecord;
+        try {
+          dayRecord = [SELECT Name, Date__c, id FROM StudingDay__c WHERE Date__c=:lessonWr.dayDate LIMIT 1];
+        } catch(QueryException ex) {
+            dayRecord = new StudingDay__c(Name=lessonWr.dayDate.format(), Date__c=lessonWr.dayDate);
+            insert dayRecord;
+            mapDaysAndLessonsWrappers.put(new DayWrapper(dayRecord), new List<LessonWrapper>() );
+        }
+        
+        openDay = dayRecord.Id;
+        Lesson__c lesson = new Lesson__c(Name=lessonWr.lessonName, StudingDay__c=dayRecord.id, lessonDay__c=dayRecord.name);
+        insert lesson;     
+
+        mapDaysAndLessonsWrappers.get(new DayWrapper(dayRecord)).add(new LessonWrapper(lesson));
+        return null;
+    }
+    //
+    
+    //User
+    public void showFeedBackView() { 
+        isShowFeedbackView = true;
+    }
+    public PageReference addNewFeedback() {
+        FeedBack__c newFeedback = new FeedBack__c(Comprehension__c=feedbackWr.comprehension, 
+            Description__c=feedbackWr.description, lessonId__c=lessonToFeedbackId, userName__c=userName);
+        insert newFeedback;
+        feedbackWr.clear();
+        isShowFeedbackView = false;
+        
+        checkAndSendEmail(lessonToFeedbackId);
+        
+        return null;
+    }
+    private void checkAndSendEmail(Id lessonId) {
+        List<FeedBack__c> listOfFeedbacks = [SELECT lessonId__c, Comprehension__c FROM FeedBack__c WHERE lessonId__c=:lessonId];
+        
+        Integer counter = 0;        
+        for (FeedBack__c feedback : listOfFeedbacks) {
+            if (feedback.Comprehension__c == 'Low') {
+                counter++;
+            }
+        }
+        
+        if (counter >= AMOUNT_TO_SEND_MESSAGE) {
+            Lesson__c lesson = [SELECT Name, lessonDay__c FROM Lesson__c WHERE id=:lessonId];
+            Internship__c internshipCustomSettings = Internship__c.getInstance(CUSTOM_SETTING_NAME);
+
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            mail.setToAddresses(new String[]{ internshipCustomSettings.Email__c });
+            mail.setSenderDisplayName('force.com site');
+            mail.setSubject('Feedback information');
+            mail.setPlainTextBody(internshipCustomSettings.MessageText__c + ' Lesson: ' + lesson.name + ' Date: ' + lesson.lessonDay__c);
+            Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+        }
+    }
+    //
+    
+    public void blankAction() { }
+}
