@@ -1,0 +1,15 @@
+@isTest
+public class ErrorPageControllerTest {
+    
+    @isTest
+    public static void propertyInitializationTest() {
+        PageReference pageRef = Page.error;
+        Test.setCurrentPage(pageRef);
+        
+        ApexPages.currentPage().getParameters().put(ContansDefinitions.ERROR_PARAM_NAME, 'error_message_text');
+        ErrorPageController controller = new ErrorPageController();
+        String errorMessage = controller.errorMessage;
+        
+        System.assertEquals('error_message_text', errorMessage);
+    }
+}
