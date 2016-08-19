@@ -1,2 +1,3 @@
 <apex:page controller="MainController" action="{!redirect}">
+      <!--  cap for future fichers -->
 </apex:page>
